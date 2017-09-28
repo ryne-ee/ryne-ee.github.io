@@ -1,7 +1,18 @@
 <!DOCTYPE html>
 <html>
+<head>
+	<script src="jquery-3.2.1.min.js"></script>
+</head>
 <body>
 <h1>Hello World</h1>
-<p>I'm hosted with GitHub Pages.</p>
+<body><input id="oldCSS" type="text" /><input id="convert" type="button" value="convert"/>
+  <div id="result"></div></body>
 </body>
+<script>
+$('#convert').on("click", function() {
+  var oldCSS = $("#oldCSS").val();
+  var newCSS = oldCSS.replace(/ /g, '%20');
+  $('#result').html(newCSS);
+});
+</script>
 </html>
