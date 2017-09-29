@@ -1,18 +1,107 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<script src="jquery-3.2.1.min.js"></script>
+	<script
+  src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+  integrity="sha256-k2WSCIexGzOj3Euiig+TlR8gA0EmPjuc79OEeY5L45g="
+  crossorigin="anonymous"></script>
+  <style>.workspace {display: none;}
+  #result {width: 500px; height: 600px;}
+  .test {width: 100px; height: 100px;}</style>
 </head>
 <body>
-<h1>Hello World</h1>
-<body><input id="oldCSS" type="text" /><input id="convert" type="button" value="convert"/>
-  <div id="result"></div></body>
+<h1>Paste in SVG code here</h1>
+<body>
+	<input id="paren" type="checkbox" /> Escape parentheses?<br />
+	<input id="oldCSS" type="text" /><input id="convert" type="button" value="convert"/><br />
+	<textarea id="result"></textarea>
+	<div class="workspace"></div>
+	<div class="test"></div>
+	<div class="test2"></div>
 </body>
 <script>
+function isNumber(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
 $('#convert').on("click", function() {
-  var oldCSS = $("#oldCSS").val();
-  var newCSS = oldCSS.replace(/ /g, '%20');
-  $('#result').html(newCSS);
+  var outputCSS = $("#oldCSS").val();
+  //round numbers to two decimals
+	$('.workspace').html(outputCSS);
+	if ($('.workspace').find('path').length > 0) {
+		var pathAttr = $('.workspace').find('path').attr('d').replace(/,/g, ' ');
+		var pathArr = pathAttr.split(" ");
+		var firstLetter = '';
+
+		for (i=0;i < pathArr.length;i++) {
+			if (isNumber(pathArr[i])) {
+				pathArr[i] = (Math.round(pathArr[i] * 10) / 10)
+			}
+			else {
+				firstLetter = pathArr[i][0];
+				pathArr[i] = pathArr[i].slice(1);
+
+				pathArr[i] = (Math.round(pathArr[i] * 10) / 10);
+				if (pathArr[i] == 0) {
+					pathArr[i] = firstLetter;
+				}
+				else {
+					pathArr[i] = firstLetter + pathArr[i];
+				}
+			}
+		}
+
+		$('.workspace').find('path').attr('d',pathArr.join(' ').replace(/,/g, ' '));
+	}
+
+	if ($('.workspace').find('polygon').length > 0) {
+		var polyAttr = $('.workspace').find('polygon').attr('points');
+		var polyArr = polyAttr.split(" ");
+		for (i=0;i < polyArr.length;i++) {
+			if (isNumber(polyArr[i])) {
+				polyArr[i] = (Math.round(polyArr[i] * 100) / 100)
+			}
+		}
+	}
+
+	$('.workspace').find('polygon').attr('points',polyArr.join(' ').replace(/,/g, ' '));
+	outputCSS = $('.workspace').html();
+  //remove id attributes
+  outputCSS = outputCSS.replace(/id=".*?"/g,' ');
+  outputCSS = outputCSS.replace(/xmlns:xlink=".*?"/g,' ');
+
+  //remove line breaks, tabs
+  outputCSS = outputCSS.replace(/(\r\n|\n|\r)/gm,"").replace('\t','');
+
+  //remove extra spaces, characters
+  outputCSS = outputCSS.replace(/\s\s+/g, '');
+  outputCSS = outputCSS.replace(/\s\s\s+/g, '');
+  outputCSS = outputCSS.replace(/px/g, '');
+  outputCSS = outputCSS.replace(/" >/g, '">');
+  outputCSS = outputCSS.replace(/> </g, '><');
+
+  //fix tags
+  outputCSS = outputCSS.replace(/gstroke/g,'g stroke');
+  outputCSS = outputCSS.replace(/gtransform/g,'g transform');
+  outputCSS = outputCSS.replace(/polygonpoints/g,'polygon points');
+  outputCSS = outputCSS.replace(/<defs><\/defs>/g,'');
+  outputCSS = outputCSS.replace(/"fill/g,'" fill');
+
+  //remove comments
+  outputCSS = outputCSS.replace(/<!--[\s\S]*?-->/g,'');
+  $('.test2').html(outputCSS);
+  console.log(outputCSS);
+  
+  //convert to uri
+  outputCSS = encodeURI(outputCSS);
+  outputCSS = outputCSS.replace(/\(/g, '%28').replace(/\)/g, '%29');
+  // put rest of string
+  outputCSS = 'url("data:image/svg+xml,' + outputCSS + '")';
+
+  //maybe escape parentheses
+  console.log(outputCSS);
+  $('#result').val(outputCSS);
+  $('.test').css('background-image',outputCSS);
 });
 </script>
 </html>
